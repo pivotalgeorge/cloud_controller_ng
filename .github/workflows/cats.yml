@@ -29,6 +29,12 @@ jobs:
         repository: cloudfoundry/cli
         ref: ${{github.event.workflow_run.head_sha}}
 
+    - name: Checkout cli-ci
+      uses: actions/checkout@v4
+      with:
+        repository: cloudfoundry/cli-ci
+        path: cli-ci
+
     - name: Checkout cf-acceptance-tests
       uses: actions/checkout@v4
       with:
@@ -133,6 +139,30 @@ jobs:
 
         bosh upload-release "https://bosh.io/d/github.com/cloudfoundry/capi-release?v=$capi_release_version"
 
+
+    - name: Deploy Isolation Segment and OIDC Provider
+      run: |
+        env_name=$(jq -r .name metadata.json)
+        jq -r .bosh.jumpbox_private_key metadata.json > /tmp/${env_name}.priv
+        eval "$(bbl print-env --metadata-file metadata.json)"
+
+        # deploy
+        bosh -d cf manifest > /tmp/manifest.yml
+        bosh interpolate /tmp/manifest.yml \
+          -o .github/ops-files/use-cflinuxfs3.yml \
+          -o .github/ops-files/replace-redis.yml \
+          -o cf-deployment/operations/use-internal-lookup-for-route-services.yml \
+          -o cf-deployment/operations/add-persistent-isolation-segment-diego-cell.yml \
+          -o cli-ci/ci/infrastructure/operations/use-latest-capi.yml \
+          -o cli-ci/ci/infrastructure/operations/add-oidc-provider.yml \
+          -o cli-ci/ci/infrastructure/operations/add-uaa-client-credentials.yml \
+          -o cli-ci/ci/infrastructure/operations/diego-cell-instances.yml \
+          -v client-secret="${{ secrets.CLIENT_SECRET }}" \
+          > ./director.yml
+
+        bosh -d cf deploy director.yml -n
+        echo "Deployed CAPI version:"
+        bosh -d cf releases | grep capi
 
     - name: Add CATS config
       run: |
