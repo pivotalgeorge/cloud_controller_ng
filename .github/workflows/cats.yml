@@ -3,20 +3,18 @@ on:
   push:
     branches:
     - run-cats
-  workflow_call:
+  workflow_dispatch:
     inputs:
-      capi-version:
-        required: true
-        type: string
       pool-name:
         type: string
-        default: ${{ vars.SHEPHERD_POOL_NAME }}
       pool-namespace:
         type: string
-        default: 'official'
 
 jobs:
   run-cats:
+    env:
+      POOL_NAME: "${{ inputs.pool-name || vars.SHEPHERD_POOL_NAME }}"
+      POOL_NAMESPACE: "${{ inputs.pool-namespace|| 'official'}}"
     defaults:
       run:
         shell: bash
@@ -44,7 +42,6 @@ jobs:
 
     - name: Checkout cf-deployment
       uses: actions/checkout@v4
-      if: ${{ inputs.capi-version == 'edge' }}
       with:
         repository: cloudfoundry/cf-deployment
         path: cf-deployment
@@ -59,13 +56,11 @@ jobs:
       name: Claim Environment
       env:
         account_token: ${{ secrets.SHEPHERD_SERVICE_ACCOUNT_TOKEN }}
-        pool_name: ${{ inputs.pool-name }}
-        pool_namespace: ${{ inputs.pool-namespace }}
       run: |
         shepherd login service-account ${account_token}
 
-        echo "shepherd create lease --duration 8h --pool ${pool_name} --pool-namespace ${pool_namespace} --namespace tas-devex"
-        lease_id=$(shepherd create lease --duration 8h --pool ${pool_name} --pool-namespace ${pool_namespace} --namespace tas-devex --json | jq -r .id)
+        echo "shepherd create lease --duration 8h --pool ${POOL_NAME} --pool-namespace ${POOL_NAMESPACE} --namespace tas-devex"
+        lease_id=$(shepherd create lease --duration 8h --pool ${POOL_NAME} --pool-namespace ${POOL_NAMESPACE} --namespace tas-devex --json | jq -r .id)
         # Give sometime for the lease to complete. Shepherd may take upto an 3 hours to create an env
         # if the pool is empty.
         count=0
@@ -128,7 +123,6 @@ jobs:
         apt-get install -y build-essential unzip
 
     - name: Upload latest CAPI release
-      if: ${{ inputs.capi-version == 'edge' }}
       run: |
         capi_release_version=$(curl -s https://api.github.com/repos/cloudfoundry/capi-release/releases/latest | jq -r .tag_name)
         echo "Latest CAPI release is $capi_release_version"
