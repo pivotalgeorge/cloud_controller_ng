@@ -53,6 +53,7 @@ jobs:
         path: cf-deployment-concourse-tasks
 
     - id: claim-env
+      if: ${{ false }}
       name: Claim Environment
       env:
         account_token: ${{ secrets.SHEPHERD_SERVICE_ACCOUNT_TOKEN }}
@@ -80,6 +81,17 @@ jobs:
         done
 
         env_name=$(jq -r .name metadata.json)
+        cat metadata.json | jq -r '.name'
+        echo "lease-id=$lease_id" >> "${GITHUB_OUTPUT}"
+
+    - name: Reuse previous claim
+      env:
+        account_token: ${{ secrets.SHEPHERD_SERVICE_ACCOUNT_TOKEN }}
+        lease_id: ${{ vars.LEASE_ID}}
+      run: |
+        shepherd login service-account ${account_token}
+        shepherd get lease ${lease_id} --namespace tas-devex --json | jq .output > metadata.json
+
         cat metadata.json | jq -r '.name'
         echo "lease-id=$lease_id" >> "${GITHUB_OUTPUT}"
 
@@ -119,6 +131,7 @@ jobs:
         capi_release_version=$(curl -s https://api.github.com/repos/cloudfoundry/capi-release/releases/latest | jq -r .tag_name)
         echo "Latest CAPI release is $capi_release_version"
         
+        cat metadata.json
         eval "$(bbl print-env --metadata-file metadata.json)"
         env_name=$(jq -r .name metadata.json)
         jq -r .bosh.jumpbox_private_key metadata.json > /tmp/${env_name}.priv
