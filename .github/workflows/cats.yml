@@ -149,9 +149,15 @@ jobs:
 
     - name: Deploy Isolation Segment and OIDC Provider
       run: |
+        export OM_TARGET="$(cat metadata.json | jq -r .ops_manager.url)"
+        export OM_USERNAME="$(cat metadata.json | jq -r .ops_manager.username)"
+        export OM_PASSWORD="$(cat metadata.json | jq -r .ops_manager.password)"
+        eval "$(om bosh-env)"
+
         env_name=$(jq -r .name metadata.json)
-        jq -r .bosh.jumpbox_private_key metadata.json > /tmp/${env_name}.priv
-        eval "$(bbl print-env --metadata-file metadata.json)"
+        jq -r .ops_manager_private_key metadata.json > /tmp/${env_name}.private
+        jumpbox_ip=$(jq -r .ops_manager_public_ip metadata.json)
+        export BOSH_ALL_PROXY="ssh+socks5://ubuntu@${jumpbox_ip}:22?private-key=/tmp/${env_name}.private"
 
         # deploy
         bosh -d cf manifest > /tmp/manifest.yml
@@ -180,8 +186,15 @@ jobs:
         DOMAIN=$(echo $API | sed "s/^api\.//")
         CF_INT_USERNAME="admin"
 
-        jq -r .bosh.jumpbox_private_key metadata.json > /tmp/${ENV}.priv
-        eval "$(bbl print-env --metadata-file ./metadata.json)"
+        export OM_TARGET="$(cat metadata.json | jq -r .ops_manager.url)"
+        export OM_USERNAME="$(cat metadata.json | jq -r .ops_manager.username)"
+        export OM_PASSWORD="$(cat metadata.json | jq -r .ops_manager.password)"
+        eval "$(om bosh-env)"
+
+        env_name=$(jq -r .name metadata.json)
+        jq -r .ops_manager_private_key metadata.json > /tmp/${env_name}.private
+        jumpbox_ip=$(jq -r .ops_manager_public_ip metadata.json)
+        export BOSH_ALL_PROXY="ssh+socks5://ubuntu@${jumpbox_ip}:22?private-key=/tmp/${env_name}.private"
 
         credhub login
         CF_INT_PASSWORD=$(credhub get -n /bosh-$ENV/cf/cf_admin_password | bosh interpolate --path /value -)
