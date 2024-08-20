@@ -123,6 +123,9 @@ jobs:
         chmod +x $install_location/credhub
         credhub --version
 
+        curl -L https://github.com/pivotal-cf/om/releases/download/7.13.0/om-linux-amd64-7.13.0 --output $install_location/om
+        chmod +x $install_location/om
+
         apt-get update
         apt-get install -y build-essential unzip
 
