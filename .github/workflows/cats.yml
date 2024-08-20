@@ -134,17 +134,15 @@ jobs:
         capi_release_version=$(curl -s https://api.github.com/repos/cloudfoundry/capi-release/releases/latest | jq -r .tag_name)
         echo "Latest CAPI release is $capi_release_version"
         
-        eval "$(bbl print-env --metadata-file metadata.json)"
-        env_name=$(jq -r .name metadata.json)
-        jq -r .bosh.jumpbox_private_key metadata.json > /tmp/${env_name}.priv
         export OM_TARGET="$(cat metadata.json | jq -r .ops_manager.url)"
         export OM_USERNAME="$(cat metadata.json | jq -r .ops_manager.username)"
         export OM_PASSWORD="$(cat metadata.json | jq -r .ops_manager.password)"
         eval "$(om bosh-env)"
 
-        echo $BOSH_ENVIRONMENT
-        echo $BOSH_CLIENT
-        echo $BOSH_ALL_PROXY
+        env_name=$(jq -r .name metadata.json)
+        jq -r .ops_manager_private_key metadata.json > /tmp/${env_name}.private
+        jumpbox_ip=$(jq -r .ops_manager_public_ip metadata.json)
+        export BOSH_ALL_PROXY="ssh+socks5://ubuntu@${jumpbox_ip}:22?private-key=/tmp/${env_name}.private"
 
         bosh upload-release "https://bosh.io/d/github.com/cloudfoundry/capi-release?v=$capi_release_version"
 
