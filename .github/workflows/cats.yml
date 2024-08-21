@@ -178,9 +178,9 @@ jobs:
           -o cf-deployment/operations/use-internal-lookup-for-route-services.yml \
           -o cf-deployment/operations/add-persistent-isolation-segment-diego-cell.yml \
           -o cli-ci/ci/infrastructure/operations/use-latest-capi.yml \
-          -o cli-ci/ci/infrastructure/operations/add-oidc-provider.yml \
-          -o cli-ci/ci/infrastructure/operations/add-uaa-client-credentials.yml \
-          -o cli-ci/ci/infrastructure/operations/diego-cell-instances.yml \
+          -o cloud_controller_ng/.github/operations/add-oidc-provider.yml \
+          -o cloud_controller_ng/.github/operations/add-uaa-client-credentials.yml \
+          -o cloud_controller_ng/.github/operations/diego-cell-instances.yml \
           -v client-secret="${{ secrets.CLIENT_SECRET }}" \
           > ./director.yml
 
