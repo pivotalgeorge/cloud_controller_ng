@@ -96,10 +96,3 @@
 - type: replace
   path: /instance_groups/name=compute/jobs/name=rep/properties/diego/rep/preloaded_rootfses/0:before
   value: cflinuxfs3:/var/vcap/packages/cflinuxfs3/rootfs.tar
-- type: replace
-  path: /releases/name=cflinuxfs4:before
-  value:
-    name: cflinuxfs3
-    sha1: 5463400cd5490e9d847326668d504a8833cf3e4e
-    url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs3-release?v=0.369.0
-    version: 0.369.0
