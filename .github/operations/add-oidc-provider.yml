@@ -25,12 +25,12 @@
   value:
     name: uaa-oidc
     instances: 1
-    azs: [z1, z2, z3]
-    vm_type: default
-    stemcell: default
+    azs: [us-central1-f]
+    vm_type: e2-standard-4.disk
+    stemcell: bosh-google-kvm-ubuntu-jammy-go_agent
     persistent_disk: 500
     networks:
-    - name: default
+    - name: wilt-2499120-pas-subnet
     jobs:
     - name: uaa
       release: uaa
