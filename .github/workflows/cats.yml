@@ -97,6 +97,8 @@ jobs:
         account_token: ${{ secrets.SHEPHERD_SERVICE_ACCOUNT_TOKEN }}
         lease_id: ${{ vars.LEASE_ID}}
       run: |
+        pwd
+        ls
         shepherd login service-account ${account_token}
         shepherd get lease ${lease_id} --namespace tas-devex --json | jq .output > metadata.json
 
@@ -106,7 +108,7 @@ jobs:
     - name: Set Up Go
       uses: actions/setup-go@v5
       with:
-        go-version-file: go.mod
+        go-version-file: cli/go.mod
         check-latest: true
 
     - name: Install Tools
@@ -158,6 +160,8 @@ jobs:
     - name: Deploy Isolation Segment and OIDC Provider
       working-directory: .
       run: |
+        pushd ./cli
+
         export OM_TARGET="$(cat metadata.json | jq -r .ops_manager.url)"
         export OM_USERNAME="$(cat metadata.json | jq -r .ops_manager.username)"
         export OM_PASSWORD="$(cat metadata.json | jq -r .ops_manager.password)"
@@ -168,13 +172,18 @@ jobs:
         jumpbox_ip=$(jq -r .ops_manager_public_ip metadata.json)
         export BOSH_ALL_PROXY="ssh+socks5://ubuntu@${jumpbox_ip}:22?private-key=/tmp/${env_name}.private"
 
+        popd
+
         cf_deployment=$(bosh ds --json | jq -r '.Tables[] | select(.Content | startswith("deploy")).Rows[] | select(.name | startswith("cf")) | .name')
 
+        ls
+        pwd
+        ls cloud_controller_ng/.github
         # deploy
         bosh -d ${cf_deployment} manifest > /tmp/manifest.yml
         bosh interpolate /tmp/manifest.yml \
-          -o cloud_controller_ng/.github/ops-files/use-cflinuxfs3.yml \
-          -o cloud_controller_ng/.github/ops-files/replace-redis.yml \
+          -o cloud_controller_ng/.github/operations/use-cflinuxfs3.yml \
+          -o cloud_controller_ng/.github/operations/replace-redis.yml \
           -o cf-deployment/operations/use-internal-lookup-for-route-services.yml \
           -o cf-deployment/operations/add-persistent-isolation-segment-diego-cell.yml \
           -o cli-ci/ci/infrastructure/operations/use-latest-capi.yml \
