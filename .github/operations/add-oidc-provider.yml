@@ -89,15 +89,21 @@
                 certificate: ((saml_oidc-key1.certificate))
 
 - type: replace
-  path: /addons/name=bosh-dns-aliases/jobs/name=bosh-dns-aliases/properties/aliases/-
+  path: /addons/name=bosh-dns-aliases?
+  # jobs/name=bosh-dns-aliases/properties/aliases/-
   value:
-    domain: uaa-oidc.service.cf.internal
-    targets:
-    - query: '*'
-      instance_group: uaa-oidc
-      deployment: cf
-      network: default
-      domain: bosh
+    jobs:
+      name: bosh-dns-aliases
+      release: bosh-dns-aliases
+      properties:
+        aliases:
+          - domain: uaa-oidc.service.cf.internal
+            targets:
+            - query: '*'
+              instance_group: uaa-oidc
+              deployment: cf
+              network: default
+              domain: bosh
 
 - type: replace
   path: /instance_groups/name=database/jobs/name=pxc-mysql/properties/seeded_databases?/-
