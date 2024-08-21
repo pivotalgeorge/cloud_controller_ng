@@ -1,6 +1,6 @@
 ---
 - type: replace
-  path: /instance_groups/name=api/jobs/name=redis?
+  path: /instance_groups/name=control/jobs/name=redis?
   value: 
     name: valkey
     release: capi

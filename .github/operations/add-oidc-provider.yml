@@ -1,6 +1,6 @@
 ---
 - type: replace
-  path: /instance_groups/name=uaa/jobs/name=uaa/properties/login/oauth?/providers?
+  path: /instance_groups/name=control/jobs/name=uaa/properties/login/oauth?/providers?
   value:
     cli-oidc-provider:
       type: oidc1.0
@@ -21,7 +21,7 @@
         user_name: user_name
 
 - type: replace
-  path: /instance_groups/name=uaa:after
+  path: /instance_groups/name=control:after
   value:
     name: uaa-oidc
     instances: 1

@@ -1,4 +1,4 @@
 ---
 - type: replace
-  path: /instance_groups/name=diego-cell/instances
+  path: /instance_groups/name=compute/instances
   value: 3
